@@ -15,6 +15,7 @@ expr: 	LEFT_PARENTH expr RIGHT_PARENTH		    	#parenthesisExpr
 	| left=expr compOperator right=expr				#compExpr
 	| ID											#idExp
 	| NUM											#numExpr
+	| MINUS expr										#invNumExpr
 	;
 
 // описания отдельных выражений и утверждений
@@ -39,7 +40,7 @@ RIGHT_PARENTH		: 'rr' ;
 ASTERISK            : 'mu' ;
 SLASH               : 'di' ;
 PLUS                : 'ad' ;
-MINUS               : 'su' ;
+MINUS               : '-' | 'su';
 
 ASSIGN              : 'eq' ;
 EQUAL               : 'is' ;

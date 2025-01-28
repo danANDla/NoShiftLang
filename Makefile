@@ -37,6 +37,6 @@ GRUN_COMMAND = java -Xmx500M -cp "/usr/local/lib/antlr-4.13.3-SNAPSHOT-complete.
 
 genj:
 	$(ANTLR_COMMAND) -o jgenerated -Xexact-output-dir NoShift.g4 -Dlanguage=Java -visitor
+	javac jgenerated/*.java
 tree:
-	export CLASSPATH=".:/usr/local/lib/antlr4-4.13.3-SNAPSHOT-complete.jar:$$CLASSPATH"
 	$(GRUN_COMMAND) NoShift prog ../progs/sample2.nshift
