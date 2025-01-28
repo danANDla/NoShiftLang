@@ -1,3 +1,5 @@
 jgenerated/
 generated/
 build/
+.antlr/
+.vscode/
