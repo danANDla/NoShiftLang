@@ -1,20 +1,20 @@
-grammar NoShiftType;
+grammar NoShift;
 
-program: (stmt)* EOF;
+prog: (stmt)* EOF;
 
 stmt:	varDecl
 	| assignment
 	| print
 	| ifstmt
 	| whilestmt
-        ;
+    ;
         
-expr: 	'(' expr ')'					#parenthesisExpr
+expr: 	LEFT_PARENTH expr RIGHT_PARENTH		    	#parenthesisExpr
 	| left=expr op=(ASTERISK | SLASH) right=expr	#mulDivExpr
-	| left=expr op=(PLUS | MINUS) right=expr	#plusMinusExpr
-	| left=expr compOperator right=expr		#compExpr
-	| ID						#idExp
-	| NUM						#numExpr
+	| left=expr op=(PLUS | MINUS) right=expr		#plusMinusExpr
+	| left=expr compOperator right=expr				#compExpr
+	| ID											#idExp
+	| NUM											#numExpr
 	;
 
 // описания отдельных выражений и утверждений
@@ -32,10 +32,9 @@ elsestmt:	'else' stmt 			;
 
 whilestmt:	'while' '(' expr ')' stmt	;
 
-// список токенов
-ID		: [a-zA-Z_] [a-zA-Z_0-9]* ;
-NUM		: [0-9]+ ;
 
+LEFT_PARENTH		: 'll' ;
+RIGHT_PARENTH		: 'rr' ;
 
 ASTERISK            : 'mu' ;
 SLASH               : 'di' ;
@@ -51,6 +50,10 @@ GREATER             : 'gr' ;
 INTEGER_TYPE		: 'd' ;
 LOGIC_TYPE			: 'l' ;
 STRING_TYPE			: 's' ;
+
+// список токенов
+ID		: [a-zA-Z_] [a-zA-Z_0-9]* ;
+NUM		: [0-9]+ ;
 
 SPACE               : [ \r\n\t]+ -> skip;
 LINE_COMMENT        : '//' ~[\n\r]* -> skip;
