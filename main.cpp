@@ -1,5 +1,7 @@
 #include "generated/NoShiftParser.h"
 #include "generated/NoShiftLexer.h"
+#include "generated/NoShiftVisitor.h"
+#include "Interpreter.hpp"
 #include "antlr4-runtime.h"
 #include <fstream>
 #include <iostream>
@@ -24,12 +26,11 @@ int main(int argc, const char *args[]) {
         std::cout << token->toString() << std::endl;
     }
 
-    // Create a parser which parses the token stream
-    // to create a parse tree.
     NoShiftParser parser(&tokens);
-    tree::ParseTree *tree = parser.prog();
-    // Print the parse tree in Lisp format.
-    cout << endl << "Parse tree (Lisp format):" << endl;
-    std::cout << tree->toStringTree(&parser) << endl;
+    NoShiftParser::ProgContext* prog_cxt = parser.prog();
+
+    // Enter interpreter
+    NoShiftInterp interp;   
+    interp.visitProg(prog_cxt);
     return 0;
 }

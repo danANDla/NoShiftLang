@@ -7,7 +7,7 @@ BUILD_DIR ?= ./build
 DEBUG_DIR ?= ./debug
 SRC_DIRS ?= /
 
-SRCS := main.cpp 
+SRCS := main.cpp Interpreter.cpp
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
@@ -34,6 +34,9 @@ MKDIR_P ?= mkdir -p
 
 ANTLR_COMMAND = java -Xmx500M -cp "/usr/local/lib/antlr4-4.13.3-SNAPSHOT-complete.jar:$$CLASSPATH" org.antlr.v4.Tool
 GRUN_COMMAND = java -Xmx500M -cp "/usr/local/lib/antlr-4.13.3-SNAPSHOT-complete.jar:$$CLASSPATH" org.antlr.v4.gui.TestRig
+
+gen:
+	$(ANTLR_COMMAND) -o generated -Xexact-output-dir NoShift.g4 -Dlanguage=Cpp -visitor
 
 genj:
 	$(ANTLR_COMMAND) -o jgenerated -Xexact-output-dir NoShift.g4 -Dlanguage=Java -visitor
