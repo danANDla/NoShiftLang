@@ -27,7 +27,26 @@ bool NoShiftInterp::varnameTaken(const std::string& varname) const {
 
 std::any NoShiftInterp::visitAssignment(NoShiftParser::AssignmentContext *ctx) {
     const std::string& p_id = ctx->ID()->toString();
-    return visitChildren(ctx);
+    if(m_var_table.find(p_id) == m_var_table.end()) {
+        throw std::runtime_error(std::string("Присвоение необъявленной переменной не поддерживаются"));
+    }
+    std::any val = visit(ctx->expr());
+
+    CommonNoShiftTypedVar var = m_var_table[p_id];
+    if(std::strcmp(var.m_val.type().name(), val.type().name()) != 0) {
+        throw std::runtime_error(std::string("Присвоение разных типов не поддерживаются"));
+    }
+
+    CommonNoShiftTypedVar::VarType right_type;
+    if(std::strcmp(val.type().name(), "i") == 0) {
+        right_type = CommonNoShiftTypedVar::INT_VAR;
+    } else if(std::strcmp(val.type().name(), "b") == 0) {
+        right_type = CommonNoShiftTypedVar::LOGIC_VAR;
+    } else {
+        right_type = CommonNoShiftTypedVar::STRING_VAR;
+    }
+    m_var_table[p_id].m_val = val;
+    return p_id;
 }
 
 std::any NoShiftInterp::visitVarDecl(NoShiftParser::VarDeclContext *ctx) {
@@ -43,15 +62,12 @@ std::any NoShiftInterp::visitVarDecl(NoShiftParser::VarDeclContext *ctx) {
     std::any val = visit(expr);
 
     if(poss_l != nullptr) {
-        std::cout <<" l type\n";
         CommonNoShiftTypedVar var(CommonNoShiftTypedVar::LOGIC_VAR, std::any_cast<bool>(val));
         m_var_table[p_id] = var;
     } else if (poss_str != nullptr) {
-        std::cout <<"str type\n";
         CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR, std::any_cast<std::string>(val));
         m_var_table[p_id] = var;
     } else {
-        std::cout <<"int type\n";
         CommonNoShiftTypedVar var(CommonNoShiftTypedVar::INT_VAR, std::any_cast<int>(val));
         m_var_table[p_id] = var;
     }
