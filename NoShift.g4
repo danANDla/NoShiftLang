@@ -13,9 +13,10 @@ expr: 	LEFT_PARENTH expr RIGHT_PARENTH		    	#parenthesisExpr
 	| left=expr op=(ASTERISK | SLASH) right=expr	#mulDivExpr
 	| left=expr op=(PLUS | MINUS) right=expr		#plusMinusExpr
 	| left=expr compOperator right=expr				#compExpr
+	| left=expr op=(LOGAND | LOGOR | LOGXOR ) right=expr				#compExpr
 	| ID											#idExp
 	| NUM											#numExpr
-	| MINUS NUM									    #invNumExpr
+	| MINUS expr									    #invNumExpr
     | STR                                           #strExpr
     | LOGIC_C                                       #logicConstExpr
 	;
@@ -46,6 +47,10 @@ EQUAL               : 'is' ;
 NOT_EQUAL           : 'nq' ;
 LESS                : 'ls' ;
 GREATER             : 'gr' ;
+
+LOGAND              : 'and';
+LOGOR               : 'or';
+LOGXOR              : 'xor';
 
 INTEGER_TYPE		: 'd' ;
 LOGIC_TYPE			: 'l' ;

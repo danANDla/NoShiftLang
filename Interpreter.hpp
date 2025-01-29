@@ -3,6 +3,7 @@
 #include "generated/NoShiftBaseVisitor.h"
 #include "generated/NoShiftParser.h"
 #include <unordered_map>
+#include <deque>
 
 struct CommonNoShiftTypedVar {
     enum VarType {
@@ -33,10 +34,15 @@ public:
     virtual std::any visitStrExpr(NoShiftParser::StrExprContext *ctx) override;
     virtual std::any visitLogicConstExpr(NoShiftParser::LogicConstExprContext *ctx) override;
 
+    virtual std::any visitPlusMinusExpr(NoShiftParser::PlusMinusExprContext *ctx) override;
+    virtual std::any visitMulDivExpr(NoShiftParser::MulDivExprContext *ctx) override;
+    virtual std::any visitCompExpr(NoShiftParser::CompExprContext *ctx) override;
 
+    virtual std::any visitParenthesisExpr(NoShiftParser::ParenthesisExprContext *ctx) override;
 
 private:
     bool varnameTaken(const std::string&) const;
     
-    std::unordered_map<std::string, CommonNoShiftTypedVar> var_table;
+    std::unordered_map<std::string, CommonNoShiftTypedVar> m_var_table;
+    std::deque<CommonNoShiftTypedVar> m_expr_stack; 
 };

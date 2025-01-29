@@ -9,3 +9,20 @@ d b eq - 40;
 print ll b rr; 
 s str eq 'noshift';
 print ll str rr;
+
+d sum_result eq a ad ll b mu bv rr;
+print ll sum_result rr;
+
+s str_concat eq str ad ' ' ad str;
+print ll str_concat rr;
+
+l logresult eq 1 is 1;
+print ll logresult rr;
+
+s str1 eq 'abcd';
+s str2 eq 'bcda';
+
+print ll str1 ls str2 rr;
+print ll str1 gr str2 rr;
+print ll - ll str1 is str2 rr rr;
+print ll str1 nq str2 rr;

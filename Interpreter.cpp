@@ -18,12 +18,11 @@ CommonNoShiftTypedVar& CommonNoShiftTypedVar::operator=(const CommonNoShiftTyped
 }
 
 bool NoShiftInterp::varnameTaken(const std::string& varname) const {
-    return var_table.find(varname) != var_table.end();
+    return m_var_table.find(varname) != m_var_table.end();
 }
 
 std::any NoShiftInterp::visitAssignment(NoShiftParser::AssignmentContext *ctx) {
     const std::string& p_id = ctx->ID()->toString();
-    std::cout << "visiting " << p_id << std::endl;
     return visitChildren(ctx);
 }
 
@@ -42,15 +41,15 @@ std::any NoShiftInterp::visitVarDecl(NoShiftParser::VarDeclContext *ctx) {
     if(poss_l != nullptr) {
         std::cout <<" l type\n";
         CommonNoShiftTypedVar var(CommonNoShiftTypedVar::LOGIC_VAR, std::any_cast<bool>(val));
-        var_table[p_id] = var;
+        m_var_table[p_id] = var;
     } else if (poss_str != nullptr) {
         std::cout <<"str type\n";
         CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR, std::any_cast<std::string>(val));
-        var_table[p_id] = var;
+        m_var_table[p_id] = var;
     } else {
         std::cout <<"int type\n";
         CommonNoShiftTypedVar var(CommonNoShiftTypedVar::INT_VAR, std::any_cast<int>(val));
-        var_table[p_id] = var;
+        m_var_table[p_id] = var;
     }
     return visitChildren(ctx);
 }
@@ -60,7 +59,11 @@ std::any NoShiftInterp::visitPrint(NoShiftParser::PrintContext *ctx) {
     if(std::strcmp(val.type().name(), "i") == 0) {
         std::cout << "printing " << std::any_cast<int>(val) << std::endl;
     } else if(std::strcmp(val.type().name(), "b") == 0) {
-        std::cout << "printing " << std::any_cast<bool>(val) << std::endl;
+        if(std::any_cast<bool>(val)) {
+            std::cout << "printing true" << std::endl;
+        } else {
+            std::cout << "printing false" << std::endl;
+        }
     } else {
         // std::cout << "bad type to print: " << val.type().name() << std::endl;
         std::cout << "printing " << std::any_cast<std::string>(val) << std::endl;
@@ -74,13 +77,21 @@ std::any NoShiftInterp::visitNumExpr(NoShiftParser::NumExprContext *ctx) {
 }
 
 std::any NoShiftInterp::visitInvNumExpr(NoShiftParser::InvNumExprContext *ctx) {
-    int val = std::stoi(ctx->NUM()->toString());
-    return -val;
+    std::any val = visit(ctx->expr());
+    if(std::strcmp(val.type().name(), "i") == 0) {
+        return -std::any_cast<int>(val);
+    } else if (std::strcmp(val.type().name(), "b") == 0) {
+        return !std::any_cast<bool>(val);
+    } else {
+        std::string str_val = std::any_cast<std::string>(val);
+        std::reverse(str_val.begin(), str_val.end());
+        return str_val;
+    }
 }
 
 std::any NoShiftInterp::visitIdExp(NoShiftParser::IdExpContext *ctx) {
     const std::string& p_id = ctx->ID()->toString();
-    return var_table[p_id].m_val;
+    return m_var_table[p_id].m_val;
 }
 
 std::any NoShiftInterp::visitStrExpr(NoShiftParser::StrExprContext *ctx) {
@@ -88,9 +99,133 @@ std::any NoShiftInterp::visitStrExpr(NoShiftParser::StrExprContext *ctx) {
     return val.substr(1, val.size() - 2);
 }
 
-std::any  NoShiftInterp::visitLogicConstExpr(NoShiftParser::LogicConstExprContext *ctx) {
+std::any NoShiftInterp::visitLogicConstExpr(NoShiftParser::LogicConstExprContext *ctx) {
     std::string val = ctx->LOGIC_C()->toString();
     if(val == "true")
         return true;
     return false;
+}
+
+std::any NoShiftInterp::visitPlusMinusExpr(NoShiftParser::PlusMinusExprContext *ctx) {
+
+    std::any leftval = visit(ctx->left);
+    std::any rightval = visit(ctx->right);
+
+    if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
+        std::cout << leftval.type().name() << " " << rightval.type().name() << std::endl;
+        throw std::runtime_error(std::string("Арифметические операции над выражениями разных типов не поддерживаются"));
+    }
+
+    antlr4::tree::TerminalNode* poss_plus = ctx->PLUS();
+    bool is_plus = true;
+    if(poss_plus == nullptr) is_plus = false;
+
+    if(std::strcmp(leftval.type().name(), "i") == 0) {
+        if(is_plus) {
+            return std::any_cast<int>(leftval) + std::any_cast<int>(rightval);
+        } else {
+            return std::any_cast<int>(leftval) - std::any_cast<int>(rightval);
+        }
+    } else if(std::strcmp(leftval.type().name(), "b") == 0) {
+        throw std::runtime_error(std::string("Арифметические операции с типом LOGIC не поддерживаются"));
+    } else {
+        if(is_plus) {
+            return std::any_cast<std::string>(leftval) + std::any_cast<std::string>(rightval);
+        } else {
+            std::string leftstr = std::any_cast<std::string>(leftval);
+            std::string rightstr = std::any_cast<std::string>(rightval);
+            if(leftstr.size() >= rightstr.size()) {
+                return leftstr.substr(0, leftstr.size() - rightstr.size());
+            } else {
+                return rightstr.substr(0, rightstr.size() - leftstr.size());
+            }
+        }
+    }
+
+}
+
+std::any NoShiftInterp::visitMulDivExpr(NoShiftParser::MulDivExprContext *ctx) {
+    std::any leftval = visit(ctx->left);
+    std::any rightval = visit(ctx->right);
+
+    if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
+        throw std::runtime_error(std::string("Арифметические операции над выражениями разных ти пов не поддерживаются"));
+    }
+
+    antlr4::tree::TerminalNode* poss_asterisk = ctx->ASTERISK();
+    bool is_asterisk = true;
+    if(poss_asterisk == nullptr) is_asterisk = false;
+
+    if(std::strcmp(leftval.type().name(), "i") == 0) {
+        if(is_asterisk) {
+            return std::any_cast<int>(leftval) * std::any_cast<int>(rightval);
+        } else {
+            return std::any_cast<int>(leftval) / std::any_cast<int>(rightval);
+        }
+    } else if(std::strcmp(leftval.type().name(), "b") == 0) {
+        throw std::runtime_error(std::string("Арифметические операции с типом LOGIC не поддерживаются"));
+    } else {
+        throw std::runtime_error(std::string("Умножение и деление строк не поддерживается"));
+    }
+}
+
+std::any NoShiftInterp::visitParenthesisExpr(NoShiftParser::ParenthesisExprContext *ctx) {
+    return visit(ctx->expr());
+}
+
+std::any NoShiftInterp::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
+    std::any leftval = visit(ctx->left);
+    std::any rightval = visit(ctx->right);
+
+    NoShiftParser::CompOperatorContext* op_ctx = ctx->compOperator();
+    antlr4::tree::TerminalNode* poss_ls = op_ctx->LESS();
+    antlr4::tree::TerminalNode* poss_gr = op_ctx->GREATER();
+    antlr4::tree::TerminalNode* poss_is = op_ctx->EQUAL();
+    antlr4::tree::TerminalNode* poss_nq = op_ctx->NOT_EQUAL();
+
+    if(poss_is || poss_nq) {
+        if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
+            if(poss_is != nullptr) return false;
+            return true;
+        } else {
+            if(std::strcmp(leftval.type().name(), "i") == 0) {
+                if(poss_is != nullptr){
+                    return std::any_cast<int>(leftval) == std::any_cast<int>(rightval);
+                }
+                return std::any_cast<int>(leftval) != std::any_cast<int>(rightval);
+            } else if(std::strcmp(leftval.type().name(), "b") == 0) {
+                if(poss_is != nullptr){
+                    return std::any_cast<bool>(leftval) == std::any_cast<bool>(rightval);
+                }
+                return std::any_cast<bool>(leftval) != std::any_cast<bool>(rightval);
+            }  else {
+                if(poss_is != nullptr){
+                    return std::any_cast<std::string>(leftval).compare(std::any_cast<std::string>(rightval)) == 0;
+                }
+                return std::any_cast<std::string>(leftval).compare(std::any_cast<std::string>(rightval)) != 0;
+            }
+        }
+    }
+
+    if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
+        return false;
+    }
+
+    if(std::strcmp(leftval.type().name(), "i") == 0) {
+        if(poss_ls != nullptr){
+            return std::any_cast<int>(leftval) < std::any_cast<int>(rightval);
+        }
+        return std::any_cast<int>(leftval) > std::any_cast<int>(rightval);
+    } else if(std::strcmp(leftval.type().name(), "b") == 0) {
+        if(poss_ls != nullptr){
+            return std::any_cast<bool>(leftval) < std::any_cast<bool>(rightval);
+        }
+        return std::any_cast<bool>(leftval) > std::any_cast<bool>(rightval);
+    }  else {
+        if(poss_ls != nullptr){
+            return std::any_cast<std::string>(leftval).compare(std::any_cast<std::string>(rightval)) < 0;
+        }
+        return std::any_cast<std::string>(leftval).compare(std::any_cast<std::string>(rightval)) > 0;
+    }
+
 }
