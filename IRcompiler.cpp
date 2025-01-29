@@ -272,7 +272,6 @@ std::any NoShiftCompiler::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
     if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
         return false;
     }
-
     if(std::strcmp(leftval.type().name(), "i") == 0) {
         if(poss_ls != nullptr){
             return std::any_cast<int>(leftval) < std::any_cast<int>(rightval);
@@ -318,3 +317,4 @@ std::any NoShiftCompiler::visitLogicExpr(NoShiftParser::LogicExprContext *ctx) {
         throw std::runtime_error(std::string("Логические операции с типом STRING не поддерживаются"));
     }
 }
+

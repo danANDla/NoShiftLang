@@ -1,1 +1,14 @@
-d a eq 30;
+// объявление целочисленных переменных
+d a eq 33333;
+d b eq 40;
+d bv eq 46;
+
+// операция присваивания
+b eq a;
+
+// операция выводa
+print ll b rr;
+
+// многосоставное выражение с указанием приоритета
+d sum_result eq a ad ll b mu bv rr;
+print ll sum_result rr;

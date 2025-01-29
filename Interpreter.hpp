@@ -40,9 +40,11 @@ public:
     virtual std::any visitPlusMinusExpr(NoShiftParser::PlusMinusExprContext *ctx) override;
     virtual std::any visitMulDivExpr(NoShiftParser::MulDivExprContext *ctx) override;
     virtual std::any visitCompExpr(NoShiftParser::CompExprContext *ctx) override;
-  virtual std::any visitLogicExpr(NoShiftParser::LogicExprContext *ctx) override;
+    virtual std::any visitLogicExpr(NoShiftParser::LogicExprContext *ctx) override;
 
     virtual std::any visitParenthesisExpr(NoShiftParser::ParenthesisExprContext *ctx) override;
+    
+    virtual std::any visitIfstmt(NoShiftParser::IfstmtContext *ctx) override;
 
 private:
     bool varnameTaken(const std::string&) const;

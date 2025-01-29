@@ -29,7 +29,7 @@ assignment: ID ASSIGN expr ';'	;
 compOperator: op=(LESS | EQUAL | NOT_EQUAL | GREATER ) ;
 
 print: 'print' LEFT_PARENTH expr RIGHT_PARENTH ';'			;
-ifstmt:		'if' LEFT_PARENTH expr RIGHT_PARENTH stmt  elsestmt? ;
+ifstmt:		'if' LEFT_PARENTH expr RIGHT_PARENTH stmt elsestmt? ;
 elsestmt:	'else' stmt 			;
 whilestmt:	'while' LEFT_PARENTH expr RIGHT_PARENTH stmt	;
 

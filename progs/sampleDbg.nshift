@@ -1,7 +1,8 @@
 d a eq 33333;
 d b eq 40;
-d bv eq 46;
-b eq a;
-print ll b rr;
-d sum_result eq a ad ll b mu bv rr;
-print ll sum_result rr;
+if ll a is b rr print ll 'equal' rr;
+if ll a is a rr print ll 'equal' rr;
+if ll b is 52 rr print ll 'equal' rr;
+else print ll 'not equal' rr;
+if ll b gr a rr print ll 'b is greater than a';
+else print ll 'a is greater than b';
