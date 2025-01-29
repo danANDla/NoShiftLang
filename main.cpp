@@ -2,6 +2,7 @@
 #include "generated/NoShiftLexer.h"
 #include "generated/NoShiftVisitor.h"
 #include "Interpreter.hpp"
+#include "IRcompiler.hpp"
 #include "antlr4-runtime.h"
 #include <fstream>
 #include <iostream>
@@ -20,17 +21,23 @@ int main(int argc, const char *args[]) {
     NoShiftLexer lexer(&input);
     CommonTokenStream tokens(&lexer);
     // Print the token stream.
-    cout << "Tokens:" << endl;
-    tokens.fill();
-    for (Token *token : tokens.getTokens()) {
-        std::cout << token->toString() << std::endl;
-    }
+    // cout << "Tokens:" << endl;
+    // tokens.fill();
+    // for (Token *token : tokens.getTokens()) {
+    //     std::cout << token->toString() << std::endl;
+    // }
 
     NoShiftParser parser(&tokens);
     NoShiftParser::ProgContext* prog_cxt = parser.prog();
 
     // Enter interpreter
+    std::cout <<"\n INTERPRETATOR \n";
     NoShiftInterp interp;   
     interp.visitProg(prog_cxt);
+
+    // Enter compiler
+    std::cout <<"\n COMPILING into IR\n";
+    NoShiftCompiler compiler;   
+    compiler.visitProg(prog_cxt);
     return 0;
 }

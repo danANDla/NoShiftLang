@@ -1,0 +1,5 @@
+d a eq 30;
+d b eq 40;
+d bv eq 46;
+b eq a;
+d sum_result eq a ad ll b ad bv rr;

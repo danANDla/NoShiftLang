@@ -7,7 +7,7 @@ BUILD_DIR ?= ./build
 DEBUG_DIR ?= ./debug
 SRC_DIRS ?= /
 
-SRCS := main.cpp Interpreter.cpp
+SRCS := main.cpp Interpreter.cpp IRcompiler.cpp $(ANTLR4_GEN_DIR)/*.cpp
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
@@ -15,7 +15,7 @@ CFLAGS ?= -I/usr/local/include/antlr4-runtime -I/home/danandla/BOTAY/yap_lazdin/
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(SRCS)
 	$(MKDIR_P) $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(SRCS) $(ANTLR4_GEN_DIR)/*.cpp -o $@
+	$(CC) $(CFLAGS) $(SRCS) -o $@
 
 .PHONY: all clean run
 
@@ -25,11 +25,11 @@ clean:
 	$(RM) -r $(BUILD_DIR) $(DEBUG_DIR)
 
 run: $(BUILD_DIR)/$(TARGET_EXEC)
-	$(BUILD_DIR)/$(TARGET_EXEC) progs/sample2.nshift
+	$(BUILD_DIR)/$(TARGET_EXEC) progs/sampleDbg.nshift
 dbg: $(SRCS)
 	$(MKDIR_P) $(DEBUG_DIR)
 	cd $(DEBUG_DIR); $(CC) $(CFLAGS) -g $(addprefix ../,$(SRCS))
-	gdb $(DEBUG_DIR)/a.out
+	gdb --args $(DEBUG_DIR)/a.out ./progs/sampleDbg.nshift
 MKDIR_P ?= mkdir -p
 
 ANTLR_COMMAND = java -Xmx500M -cp "/usr/local/lib/antlr4-4.13.3-SNAPSHOT-complete.jar:$$CLASSPATH" org.antlr.v4.Tool

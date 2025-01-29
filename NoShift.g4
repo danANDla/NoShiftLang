@@ -31,7 +31,7 @@ compOperator: op=(LESS | EQUAL | NOT_EQUAL | GREATER ) ;
 print: 'print' LEFT_PARENTH expr RIGHT_PARENTH ';'			;
 ifstmt:		'if' LEFT_PARENTH expr RIGHT_PARENTH stmt  elsestmt? ;
 elsestmt:	'else' stmt 			;
-whilestmt:	LEFT_PARENTH LEFT_PARENTH expr RIGHT_PARENTH stmt	;
+whilestmt:	'while' LEFT_PARENTH expr RIGHT_PARENTH stmt	;
 
 
 LEFT_PARENTH		: 'll' ;

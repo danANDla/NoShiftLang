@@ -10,6 +10,8 @@ print ll b rr;
 s str eq 'noshift';
 print ll str rr;
 
+print ll str ad str rr;
+
 d sum_result eq a ad ll b mu bv rr;
 print ll sum_result rr;
 

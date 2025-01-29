@@ -1,36 +1,75 @@
-#include "Interpreter.hpp"
+#include "IRcompiler.hpp"
 
 #include <iostream>
 #include <cstring>
 
-CommonNoShiftTypedVar::CommonNoShiftTypedVar(VarType type, std::any val)
-    : m_type(type), m_val(val){
-}
-
-CommonNoShiftTypedVar::CommonNoShiftTypedVar(CommonNoShiftTypedVar&& another)
-    : m_type(another.m_type), m_val(another.m_val){
-}
-
-CommonNoShiftTypedVar::CommonNoShiftTypedVar(const CommonNoShiftTypedVar& another)
-    : m_type(another.m_type), m_val(another.m_val){
-}
-
-CommonNoShiftTypedVar& CommonNoShiftTypedVar::operator=(const CommonNoShiftTypedVar& another) {
-    m_type = another.m_type;
-    m_val = another.m_val;
-    return *this;
-}
-
-bool NoShiftInterp::varnameTaken(const std::string& varname) const {
+bool NoShiftCompiler::varnameTaken(const std::string& varname) const {
     return m_var_table.find(varname) != m_var_table.end();
 }
 
-std::any NoShiftInterp::visitAssignment(NoShiftParser::AssignmentContext *ctx) {
-    const std::string& p_id = ctx->ID()->toString();
-    return visitChildren(ctx);
+std::string NoShiftCompiler::putTmp(CommonNoShiftTypedVar var) {
+    std::string res = stack_marker + ":" + std::to_string(m_expr_stack.size());
+    var.addr = res;
+    m_expr_stack.emplace_back(m_expr_stack.size(), var);
+    return res;
 }
 
-std::any NoShiftInterp::visitVarDecl(NoShiftParser::VarDeclContext *ctx) {
+CommonNoShiftTypedVar::VarType NoShiftCompiler::typeByAddr(const std::string& addr) const {
+    CommonNoShiftTypedVar var(CommonNoShiftTypedVar::NAN, 0);
+    if (addr.find(stack_marker) == std::string::npos) {
+        auto named_var = m_var_table.find(addr);
+        if(named_var == m_var_table.end()) return var.m_type; 
+        return (*named_var).second.m_type;
+    }
+
+    std::size_t del_pos = addr.find(":");
+    del_pos = std::atoi(addr.substr(del_pos + 1, addr.size() - 1).c_str());
+    var = getStackElement(del_pos);
+    return var.m_type;
+}
+
+CommonNoShiftTypedVar NoShiftCompiler::getStackElement(const std::size_t from_top) const {
+    auto it = m_expr_stack.begin();
+    std::size_t curr = 0;
+    CommonNoShiftTypedVar var(CommonNoShiftTypedVar::NAN, 0);
+    while(it != m_expr_stack.end()) {
+        if(curr == from_top) {
+            var = (*it).second;
+            return var;
+        }
+        it++;
+        curr++;
+    }
+    return var;
+}
+
+std::size_t NoShiftCompiler::freeUntil(const std::size_t stack_size)  {
+    std::size_t count = 0;
+    while(m_expr_stack.size() > stack_size) {
+        m_expr_stack.pop_back();
+        count ++;
+    }
+    return count;
+}
+
+std::any NoShiftCompiler::visitAssignment(NoShiftParser::AssignmentContext *ctx) {
+    const std::string& p_id = ctx->ID()->toString();
+    if(m_var_table.find(p_id) == m_var_table.end()) {
+        throw std::runtime_error(std::string("Присвоение необъявленной переменной не поддерживаются"));
+    }
+    CommonNoShiftTypedVar var = m_var_table[p_id];
+
+    std::string rightval_addr = std::any_cast<std::string>(visit(ctx->expr()));
+    CommonNoShiftTypedVar::VarType right_type = typeByAddr(rightval_addr);
+
+    if(var.m_type != right_type) {
+        throw std::runtime_error(std::string("Присвоение разных типов не поддерживаются"));
+    }
+    std::cout << p_id << " = " << rightval_addr << std::endl;
+    return p_id;
+}
+
+std::any NoShiftCompiler::visitVarDecl(NoShiftParser::VarDeclContext *ctx) {
     const std::string& p_id = ctx->ID()->toString();
     if(varnameTaken(p_id)) {
         throw std::runtime_error(std::string("Повторное объявление переменной ") + p_id);
@@ -39,26 +78,25 @@ std::any NoShiftInterp::visitVarDecl(NoShiftParser::VarDeclContext *ctx) {
     antlr4::tree::TerminalNode* poss_str = ctx->STRING_TYPE();
     antlr4::tree::TerminalNode* poss_d = ctx->INTEGER_TYPE();
     antlr4::tree::TerminalNode* poss_l = ctx->LOGIC_TYPE();
-    NoShiftParser::ExprContext* expr = ctx->expr();
-    std::any val = visit(expr);
+
+    const std::string& val_addr = std::any_cast<std::string>(visit(ctx->expr()));
+    CommonNoShiftTypedVar::VarType val_type = typeByAddr(val_addr);
 
     if(poss_l != nullptr) {
-        std::cout <<" l type\n";
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::LOGIC_VAR, std::any_cast<bool>(val));
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::LOGIC_VAR, std::any_cast<bool>(false));
         m_var_table[p_id] = var;
     } else if (poss_str != nullptr) {
-        std::cout <<"str type\n";
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR, std::any_cast<std::string>(val));
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR, std::any_cast<std::string>(""));
         m_var_table[p_id] = var;
     } else {
-        std::cout <<"int type\n";
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::INT_VAR, std::any_cast<int>(val));
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::INT_VAR, std::any_cast<int>(1));
         m_var_table[p_id] = var;
     }
-    return visitChildren(ctx);
+    std::cout << p_id << " = " << val_addr << std::endl;
+    return p_id;
 }
 
-std::any NoShiftInterp::visitPrint(NoShiftParser::PrintContext *ctx) {
+std::any NoShiftCompiler::visitPrint(NoShiftParser::PrintContext *ctx) {
     std::any val = visit(ctx->expr());
     if(std::strcmp(val.type().name(), "i") == 0) {
         std::cout << "printing " << std::any_cast<int>(val) << std::endl;
@@ -75,12 +113,14 @@ std::any NoShiftInterp::visitPrint(NoShiftParser::PrintContext *ctx) {
     return val;
 }
 
-std::any NoShiftInterp::visitNumExpr(NoShiftParser::NumExprContext *ctx) {
+std::any NoShiftCompiler::visitNumExpr(NoShiftParser::NumExprContext *ctx) {
     int val = std::stoi(ctx->NUM()->toString());
-    return val;
+    std::string addr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::INT_VAR, 0));
+    std::cout << addr << " = " << val << std::endl;
+    return addr;
 }
 
-std::any NoShiftInterp::visitInvNumExpr(NoShiftParser::InvNumExprContext *ctx) {
+std::any NoShiftCompiler::visitInvNumExpr(NoShiftParser::InvNumExprContext *ctx) {
     std::any val = visit(ctx->expr());
     if(std::strcmp(val.type().name(), "i") == 0) {
         return -std::any_cast<int>(val);
@@ -93,30 +133,38 @@ std::any NoShiftInterp::visitInvNumExpr(NoShiftParser::InvNumExprContext *ctx) {
     }
 }
 
-std::any NoShiftInterp::visitIdExp(NoShiftParser::IdExpContext *ctx) {
+std::any NoShiftCompiler::visitIdExp(NoShiftParser::IdExpContext *ctx) {
     const std::string& p_id = ctx->ID()->toString();
-    return m_var_table[p_id].m_val;
+    return p_id;
 }
 
-std::any NoShiftInterp::visitStrExpr(NoShiftParser::StrExprContext *ctx) {
+std::any NoShiftCompiler::visitStrExpr(NoShiftParser::StrExprContext *ctx) {
     std::string val = ctx->STR()->toString();
-    return val.substr(1, val.size() - 2);
+    std::string addr =  putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::STRING_VAR, ""));
+    std::cout << addr << " = " << val << std::endl;
+    return addr;
 }
 
-std::any NoShiftInterp::visitLogicConstExpr(NoShiftParser::LogicConstExprContext *ctx) {
+std::any NoShiftCompiler::visitLogicConstExpr(NoShiftParser::LogicConstExprContext *ctx) {
     std::string val = ctx->LOGIC_C()->toString();
-    if(val == "true")
-        return true;
-    return false;
+    std::string addr;
+    if(val == "true") {
+        addr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::LOGIC_VAR, true));
+    } else {
+        addr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::LOGIC_VAR, false));
+    }
+    std::cout << addr << " = " << val << std::endl;
+    return addr;
 }
 
-std::any NoShiftInterp::visitPlusMinusExpr(NoShiftParser::PlusMinusExprContext *ctx) {
+std::any NoShiftCompiler::visitPlusMinusExpr(NoShiftParser::PlusMinusExprContext *ctx) {
 
-    std::any leftval = visit(ctx->left);
-    std::any rightval = visit(ctx->right);
+    std::string leftval_addr = std::any_cast<std::string>(visit(ctx->left));
+    std::string rightval_addr = std::any_cast<std::string>(visit(ctx->right));
+    CommonNoShiftTypedVar::VarType left_type = typeByAddr(leftval_addr);
+    CommonNoShiftTypedVar::VarType right_type = typeByAddr(rightval_addr);
 
-    if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
-        std::cout << leftval.type().name() << " " << rightval.type().name() << std::endl;
+    if(left_type != right_type) {
         throw std::runtime_error(std::string("Арифметические операции над выражениями разных типов не поддерживаются"));
     }
 
@@ -124,31 +172,29 @@ std::any NoShiftInterp::visitPlusMinusExpr(NoShiftParser::PlusMinusExprContext *
     bool is_plus = true;
     if(poss_plus == nullptr) is_plus = false;
 
-    if(std::strcmp(leftval.type().name(), "i") == 0) {
+
+    std::string resaddr;
+    if(left_type == CommonNoShiftTypedVar::INT_VAR) {
+        resaddr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::INT_VAR, 0));
         if(is_plus) {
-            return std::any_cast<int>(leftval) + std::any_cast<int>(rightval);
+            std::cout << resaddr << " " << leftval_addr << " + " << rightval_addr << std::endl;
         } else {
-            return std::any_cast<int>(leftval) - std::any_cast<int>(rightval);
+            std::cout << resaddr << " " << leftval_addr << " - " << rightval_addr << std::endl;
         }
-    } else if(std::strcmp(leftval.type().name(), "b") == 0) {
+    } else if(left_type == CommonNoShiftTypedVar::LOGIC_VAR) {
         throw std::runtime_error(std::string("Арифметические операции с типом LOGIC не поддерживаются"));
     } else {
+        resaddr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::STRING_VAR, 0));
         if(is_plus) {
-            return std::any_cast<std::string>(leftval) + std::any_cast<std::string>(rightval);
+            std::cout << resaddr << " " << leftval_addr << " + " << rightval_addr << std::endl;
         } else {
-            std::string leftstr = std::any_cast<std::string>(leftval);
-            std::string rightstr = std::any_cast<std::string>(rightval);
-            if(leftstr.size() >= rightstr.size()) {
-                return leftstr.substr(0, leftstr.size() - rightstr.size());
-            } else {
-                return rightstr.substr(0, rightstr.size() - leftstr.size());
-            }
+            std::cout << resaddr << " " << leftval_addr << " - " << rightval_addr << std::endl;
         }
     }
-
+    return resaddr;
 }
 
-std::any NoShiftInterp::visitMulDivExpr(NoShiftParser::MulDivExprContext *ctx) {
+std::any NoShiftCompiler::visitMulDivExpr(NoShiftParser::MulDivExprContext *ctx) {
     std::any leftval = visit(ctx->left);
     std::any rightval = visit(ctx->right);
 
@@ -173,11 +219,19 @@ std::any NoShiftInterp::visitMulDivExpr(NoShiftParser::MulDivExprContext *ctx) {
     }
 }
 
-std::any NoShiftInterp::visitParenthesisExpr(NoShiftParser::ParenthesisExprContext *ctx) {
+std::any NoShiftCompiler::visitParenthesisExpr(NoShiftParser::ParenthesisExprContext *ctx) {
     return visit(ctx->expr());
 }
 
-std::any NoShiftInterp::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
+std::any NoShiftCompiler::visitStmt(NoShiftParser::StmtContext *ctx) {
+    std::size_t stack_state = m_expr_stack.size();
+    visitChildren(ctx);
+    std::size_t freed = freeUntil(stack_state);
+    std::cout << "freed stack: " << freed << std::endl;
+    return freed;
+}
+
+std::any NoShiftCompiler::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
     std::any leftval = visit(ctx->left);
     std::any rightval = visit(ctx->right);
 
@@ -234,7 +288,7 @@ std::any NoShiftInterp::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
 
 }
 
-std::any NoShiftInterp::visitLogicExpr(NoShiftParser::LogicExprContext *ctx) {
+std::any NoShiftCompiler::visitLogicExpr(NoShiftParser::LogicExprContext *ctx) {
     std::any leftval = visit(ctx->left);
     std::any rightval = visit(ctx->right);
 
