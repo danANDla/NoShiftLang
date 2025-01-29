@@ -162,7 +162,6 @@ std::any NoShiftCompiler::visitPlusMinusExpr(NoShiftParser::PlusMinusExprContext
     std::string rightval_addr = std::any_cast<std::string>(visit(ctx->right));
     CommonNoShiftTypedVar::VarType left_type = typeByAddr(leftval_addr);
     CommonNoShiftTypedVar::VarType right_type = typeByAddr(rightval_addr);
-
     if(left_type != right_type) {
         throw std::runtime_error(std::string("Арифметические операции над выражениями разных типов не поддерживаются"));
     }
@@ -236,8 +235,13 @@ std::any NoShiftCompiler::visitStmt(NoShiftParser::StmtContext *ctx) {
 }
 
 std::any NoShiftCompiler::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
-    std::any leftval = visit(ctx->left);
-    std::any rightval = visit(ctx->right);
+    std::string leftval_addr = std::any_cast<std::string>(visit(ctx->left));
+    std::string rightval_addr = std::any_cast<std::string>(visit(ctx->right));
+    CommonNoShiftTypedVar::VarType left_type = typeByAddr(leftval_addr);
+    CommonNoShiftTypedVar::VarType right_type = typeByAddr(rightval_addr);
+    if(left_type != right_type) {
+        throw std::runtime_error(std::string("Логические операции над выражениями разных типов не поддерживаются"));
+    }
 
     NoShiftParser::CompOperatorContext* op_ctx = ctx->compOperator();
     antlr4::tree::TerminalNode* poss_ls = op_ctx->LESS();
@@ -245,50 +249,49 @@ std::any NoShiftCompiler::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
     antlr4::tree::TerminalNode* poss_is = op_ctx->EQUAL();
     antlr4::tree::TerminalNode* poss_nq = op_ctx->NOT_EQUAL();
 
+    std::string resaddr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::LOGIC_VAR, false));
     if(poss_is || poss_nq) {
-        if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
-            if(poss_is != nullptr) return false;
-            return true;
-        } else {
-            if(std::strcmp(leftval.type().name(), "i") == 0) {
-                if(poss_is != nullptr){
-                    return std::any_cast<int>(leftval) == std::any_cast<int>(rightval);
-                }
-                return std::any_cast<int>(leftval) != std::any_cast<int>(rightval);
-            } else if(std::strcmp(leftval.type().name(), "b") == 0) {
-                if(poss_is != nullptr){
-                    return std::any_cast<bool>(leftval) == std::any_cast<bool>(rightval);
-                }
-                return std::any_cast<bool>(leftval) != std::any_cast<bool>(rightval);
-            }  else {
-                if(poss_is != nullptr){
-                    return std::any_cast<std::string>(leftval).compare(std::any_cast<std::string>(rightval)) == 0;
-                }
-                return std::any_cast<std::string>(leftval).compare(std::any_cast<std::string>(rightval)) != 0;
+        if(left_type == CommonNoShiftTypedVar::VarType::INT_VAR) {
+            if(poss_is != nullptr){
+                std::cout << resaddr << " intEQ " << leftval_addr << ", " << rightval_addr << std::endl; 
+            } else {
+                std::cout << resaddr << " intNEQ " << leftval_addr << ", " << rightval_addr; 
+            }
+        } else if(left_type == CommonNoShiftTypedVar::VarType::LOGIC_VAR) {
+            if(poss_is != nullptr){
+                std::cout << resaddr << " boolEQ " << leftval_addr << ", " << rightval_addr << std::endl; 
+            } else {
+                std::cout << resaddr << " boolNEQ " << leftval_addr << ", " << rightval_addr << std::endl; 
+            }
+        }  else {
+            if(poss_is != nullptr){
+                std::cout << resaddr << " strEQ " << leftval_addr << ", " << rightval_addr << std::endl; 
+            } else {
+                std::cout << resaddr << " strNEQ " << leftval_addr << ", " << rightval_addr << std::endl; 
+            }
+        }
+    } else {
+        if(left_type == CommonNoShiftTypedVar::VarType::INT_VAR) {
+            if(poss_ls != nullptr){
+                std::cout << resaddr << " intLE " << leftval_addr << ", " << rightval_addr << std::endl; 
+            } else {
+                std::cout << resaddr << " intGE " << leftval_addr << ", " << rightval_addr << std::endl; 
+            }
+        } else if(left_type == CommonNoShiftTypedVar::VarType::LOGIC_VAR) {
+            if(poss_ls != nullptr){
+                std::cout << resaddr << " boolLE " << leftval_addr << ", " << rightval_addr << std::endl; 
+            } else {
+                std::cout << resaddr << " boolNGE " << leftval_addr << ", " << rightval_addr << std::endl; 
+            }
+        }  else {
+            if(poss_ls != nullptr){
+                std::cout << resaddr << " strLE " << leftval_addr << ", " << rightval_addr << std::endl; 
+            } else {
+                std::cout << resaddr << " strNGE " << leftval_addr << ", " << rightval_addr << std::endl; 
             }
         }
     }
-
-    if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
-        return false;
-    }
-    if(std::strcmp(leftval.type().name(), "i") == 0) {
-        if(poss_ls != nullptr){
-            return std::any_cast<int>(leftval) < std::any_cast<int>(rightval);
-        }
-        return std::any_cast<int>(leftval) > std::any_cast<int>(rightval);
-    } else if(std::strcmp(leftval.type().name(), "b") == 0) {
-        if(poss_ls != nullptr){
-            return std::any_cast<bool>(leftval) < std::any_cast<bool>(rightval);
-        }
-        return std::any_cast<bool>(leftval) > std::any_cast<bool>(rightval);
-    }  else {
-        if(poss_ls != nullptr){
-            return std::any_cast<std::string>(leftval).compare(std::any_cast<std::string>(rightval)) < 0;
-        }
-        return std::any_cast<std::string>(leftval).compare(std::any_cast<std::string>(rightval)) > 0;
-    }
-
+    return resaddr;
 }
 
 std::any NoShiftCompiler::visitLogicExpr(NoShiftParser::LogicExprContext *ctx) {

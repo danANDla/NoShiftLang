@@ -34,8 +34,6 @@ elsestmt:	'else' stmt 			;
 whilestmt:	'while' LEFT_PARENTH expr RIGHT_PARENTH stmt	;
 
 
-LEFT_PARENTH		: 'll' ;
-RIGHT_PARENTH		: 'rr' ;
 
 ASTERISK            : 'mu' ;
 SLASH               : 'di' ;
@@ -56,6 +54,8 @@ INTEGER_TYPE		: 'd' ;
 LOGIC_TYPE			: 'l' ;
 STRING_TYPE			: 's' ;
 
+LEFT_PARENTH		: 'll' ;
+RIGHT_PARENTH		: 'rr' ;
 
 LOGIC_C : 'true' | 'false';
 STR     : '\'' ~[\n\r]* '\'' ;
