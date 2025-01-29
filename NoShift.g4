@@ -7,6 +7,7 @@ stmt:	varDecl
 	| print
 	| ifstmt
 	| whilestmt
+    | block
     ;
         
 expr: 	LEFT_PARENTH expr RIGHT_PARENTH		    	#parenthesisExpr
@@ -32,6 +33,7 @@ print: 'print' LEFT_PARENTH expr RIGHT_PARENTH ';'			;
 ifstmt:		'if' LEFT_PARENTH expr RIGHT_PARENTH stmt elsestmt? ;
 elsestmt:	'else' stmt 			;
 whilestmt:	'while' LEFT_PARENTH expr RIGHT_PARENTH stmt	;
+block:      'be'  stmt*  'en';
 
 
 

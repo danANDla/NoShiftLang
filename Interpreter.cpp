@@ -280,7 +280,7 @@ std::any NoShiftInterp::visitLogicExpr(NoShiftParser::LogicExprContext *ctx) {
 std::any NoShiftInterp::visitIfstmt(NoShiftParser::IfstmtContext *ctx) {
     std::any cond_result = visit(ctx->expr());
     if(std::strcmp(cond_result.type().name(), "b") != 0) {
-        throw std::runtime_error(std::string("В условие должно быть выражение типа LOGIC"));
+        throw std::runtime_error(std::string("В условии должно быть выражение типа LOGIC"));
     }
 
     bool res = std::any_cast<bool>(cond_result);
@@ -291,4 +291,19 @@ std::any NoShiftInterp::visitIfstmt(NoShiftParser::IfstmtContext *ctx) {
         std::any stmt = visit(else_ctx->stmt());    
     }
     return res;
+}
+
+std::any NoShiftInterp::visitWhilestmt(NoShiftParser::WhilestmtContext *ctx) {
+    std::any cond_result = visit(ctx->expr());
+    if(std::strcmp(cond_result.type().name(), "b") != 0) {
+        throw std::runtime_error(std::string("В условии должно быть выражение типа LOGIC"));
+    }
+    bool res = std::any_cast<bool>(cond_result);
+    while(res) {
+        std::any stmt = visit(ctx->stmt());    
+        std::any cond_result = visit(ctx->expr());
+        res = std::any_cast<bool>(cond_result);
+    }
+    return res;
+
 }

@@ -45,6 +45,7 @@ public:
     virtual std::any visitParenthesisExpr(NoShiftParser::ParenthesisExprContext *ctx) override;
     
     virtual std::any visitIfstmt(NoShiftParser::IfstmtContext *ctx) override;
+    virtual std::any visitWhilestmt(NoShiftParser::WhilestmtContext *ctx) override;
 
 private:
     bool varnameTaken(const std::string&) const;
