@@ -229,3 +229,30 @@ std::any NoShiftInterp::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
     }
 
 }
+
+std::any NoShiftInterp::visitLogicExpr(NoShiftParser::LogicExprContext *ctx) {
+    std::any leftval = visit(ctx->left);
+    std::any rightval = visit(ctx->right);
+
+    if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
+        std::cout << leftval.type().name() << " " << rightval.type().name() << std::endl;
+        throw std::runtime_error(std::string("Логические операции над выражениями разных типов не поддерживаются"));
+    }
+
+    antlr4::tree::TerminalNode* poss_and = ctx->LOGAND();
+    antlr4::tree::TerminalNode* poss_xor = ctx->LOGXOR();
+
+    if(std::strcmp(leftval.type().name(), "i") == 0) {
+        throw std::runtime_error(std::string("Логические операции с типом INTEGER не поддерживаются"));
+    } else if(std::strcmp(leftval.type().name(), "b") == 0) {
+        if(poss_and != nullptr) {
+            return (bool) (std::any_cast<bool>(leftval) & std::any_cast<bool>(rightval));
+        } else if(poss_xor != nullptr) {
+            return (bool) (std::any_cast<bool>(leftval) ^ std::any_cast<bool>(rightval));
+        } else {
+            return (bool) (std::any_cast<bool>(leftval) || std::any_cast<bool>(rightval));
+        }
+    } else {
+        throw std::runtime_error(std::string("Логические операции с типом STRING не поддерживаются"));
+    }
+}

@@ -26,3 +26,6 @@ print ll str1 ls str2 rr;
 print ll str1 gr str2 rr;
 print ll - ll str1 is str2 rr rr;
 print ll str1 nq str2 rr;
+
+print ll ll a gr b rr and ll b gr a rr rr;
+print ll ll a gr b rr or ll b gr a rr rr;

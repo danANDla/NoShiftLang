@@ -13,7 +13,7 @@ expr: 	LEFT_PARENTH expr RIGHT_PARENTH		    	#parenthesisExpr
 	| left=expr op=(ASTERISK | SLASH) right=expr	#mulDivExpr
 	| left=expr op=(PLUS | MINUS) right=expr		#plusMinusExpr
 	| left=expr compOperator right=expr				#compExpr
-	| left=expr op=(LOGAND | LOGOR | LOGXOR ) right=expr				#compExpr
+	| left=expr op=(LOGAND | LOGOR | LOGXOR ) right=expr	#logicExpr
 	| ID											#idExp
 	| NUM											#numExpr
 	| MINUS expr									    #invNumExpr
