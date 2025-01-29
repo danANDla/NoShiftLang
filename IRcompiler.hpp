@@ -30,11 +30,14 @@ enum AbstractOperation {
     GRstr,
     LSstr,
 
-    JEQ,
+    JNEQ,
+    JUMP,
 
     PRINT_STR,
     PRINT_INT,
     PRINT_LOGIC,
+
+    NOP
 };
 std::string operationName(const AbstractOperation op);
 
@@ -77,7 +80,7 @@ public:
     virtual std::any visitProg(NoShiftParser::ProgContext *ctx) override;
     virtual std::any visitStmt(NoShiftParser::StmtContext *ctx) override ;
 
-    // virtual std::any visitIfstmt(NoShiftParser::IfstmtContext *ctx) override;
+    virtual std::any visitIfstmt(NoShiftParser::IfstmtContext *ctx) override;
 
 private:
     std::string stack_marker = "[Stack]";
@@ -86,6 +89,8 @@ private:
     CommonNoShiftTypedVar::VarType typeByAddr(const std::string& addr) const;
     CommonNoShiftTypedVar getStackElement(const std::size_t from_top) const;
     std::size_t freeUntil(const std::size_t stack_size);
+
+    void updateJumpInstr(std::size_t on_state, std::string new_to_addr);
     
     std::unordered_map<std::string, CommonNoShiftTypedVar> m_var_table;
     std::deque<std::pair<std::size_t, CommonNoShiftTypedVar>> m_expr_stack; 

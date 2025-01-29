@@ -39,11 +39,20 @@ std::string operationName(const AbstractOperation op) {
     case ADD:
         res = "ADD";
         break;
+    case ADDstr:
+        res = "ADDstr";
+        break;
     case SUB:
         res = "SUB";
         break;
+    case SUBstr:
+        res = "SUBstr";
+        break;
     case MUL:
         res = "MUL";
+        break;
+    case DIV:
+        res = "DIV";
         break;
     case OR:
         res = "OR";
@@ -54,6 +63,7 @@ std::string operationName(const AbstractOperation op) {
     case AND:
         res = "AND";
         break;
+
     case EQ:
         res = "EQ";
         break;
@@ -66,9 +76,26 @@ std::string operationName(const AbstractOperation op) {
     case LS:
         res = "LS";
         break;
-    case JEQ:
-        res = "JEQ";
+    case EQstr:
+        res = "EQstr";
         break;
+    case NEQstr:
+        res = "NEQstr";
+        break;
+    case GRstr:
+        res = "GRstr";
+        break;
+    case LSstr:
+        res = "LSstr";
+        break;
+
+    case JNEQ:
+        res = "JNEQ";
+        break;
+    case JUMP:
+        res = "JUMP";
+        break;
+
     case PRINT_STR:
         res = "PRINTSTR";
         break;
@@ -78,14 +105,17 @@ std::string operationName(const AbstractOperation op) {
     case PRINT_LOGIC:
         res = "PRINTLOGIC";
         break;
+    case NOP:
+        res = "NOP";
+        break;
     default:
+        std::cout << "unkown op " << op;
         break;
     }
     return res;
 }
 
-bool NoShiftCompiler::varnameTaken(const std::string& varname) const {
-    return m_var_table.find(varname) != m_var_table.end();
+bool NoShiftCompiler::varnameTaken(const std::string& varname) const { return m_var_table.find(varname) != m_var_table.end();
 }
 
 std::string NoShiftCompiler::putTmp(CommonNoShiftTypedVar var) {
@@ -307,11 +337,13 @@ std::any NoShiftCompiler::visitParenthesisExpr(NoShiftParser::ParenthesisExprCon
 
 std::any NoShiftCompiler::visitProg(NoShiftParser::ProgContext *ctx) {
     visitChildren(ctx);
-
-    printf("%15s %13s %13s %13s\n", "INSTR", "RESADDR", "A_ADDR", "B_ADDR");
+    instructions.push_back(TripleAddrInstr(NOP, "", "", ""));
+    printf("%10s %15s %13s %13s %13s\n", "INSTR_NUM", "INSTR", "RESADDR", "A_ADDR", "B_ADDR");
+    std::size_t cnt = 0;
     for(auto instr: instructions) {
-        printf("%15s %13s %13s %13s\n", operationName(instr.m_op).c_str(), instr.m_res_addr.c_str(), instr.m_a_operand.c_str(), instr.m_b_operand.c_str());
+        printf("%10s %15s %13s %13s %13s\n", std::to_string(cnt).c_str(), operationName(instr.m_op).c_str(), instr.m_res_addr.c_str(), instr.m_a_operand.c_str(), instr.m_b_operand.c_str());
        // std::cout << operationName(instr.m_op) << " " << instr.m_res_addr << " " << instr.m_a_operand << " " << instr.m_b_operand << std::endl;
+       cnt++;
     }
     return instructions.size();
 }
@@ -354,7 +386,6 @@ std::any NoShiftCompiler::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
                 op = EQstr;
             }
         }
-            instructions.push_back(TripleAddrInstr(DIV, resaddr, leftval_addr, rightval_addr));
     } else {
         if(left_type == CommonNoShiftTypedVar::INT_VAR || left_type == CommonNoShiftTypedVar::LOGIC_VAR) {
             if(poss_ls != nullptr){
@@ -406,18 +437,50 @@ std::any NoShiftCompiler::visitLogicExpr(NoShiftParser::LogicExprContext *ctx) {
     return resaddr;
 }
 
+void NoShiftCompiler::updateJumpInstr(std::size_t on_state, std::string new_to_addr) {
+    auto it = instructions.begin();
+    std::size_t count = 0;
+    while(count < on_state && it != instructions.end()) {
+        it++;
+        count++;
+    }
+    if(count == on_state) {
+        if((*it).m_op != JNEQ && (*it).m_op != JUMP) {
+            throw std::runtime_error(std::string("Неправильный адрес инструкции"));
+            return;
+        }
+        (*it).m_res_addr = new_to_addr;
+    }
+}
 
-// std::any NoShiftCompiler::visitIfstmt(NoShiftParser::IfstmtContext *ctx) {
-//     std::string cond_result_addr = visit(ctx->expr());
-//     CommonNoShiftTypedVar::VarType result_type = typeByAddr(cond_result_addr);
-//     if(result_type != CommonNoShiftTypedVar::LOGIC_VAR) {
-//         throw std::runtime_error(std::string("В условие должно быть выражение типа LOGIC"));
-//     }
-//     if(res) {
-//         std::any stmt = visit(ctx->stmt());    
-//     } else if(ctx->elsestmt() != nullptr) {
-//         NoShiftParser::ElsestmtContext* else_ctx = ctx->elsestmt();
-//         std::any stmt = visit(else_ctx->stmt());    
-//     }
-//     return res;
-// }
+std::any NoShiftCompiler::visitIfstmt(NoShiftParser::IfstmtContext *ctx) {
+    std::string cond_result_addr = std::any_cast<std::string>(visit(ctx->expr()));
+    CommonNoShiftTypedVar::VarType result_type = typeByAddr(cond_result_addr);
+    if(result_type != CommonNoShiftTypedVar::LOGIC_VAR) {
+        throw std::runtime_error(std::string("В условие должно быть выражение типа LOGIC"));
+    }
+
+    std::string true_const_addr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::LOGIC_VAR, true));
+    instructions.push_back(TripleAddrInstr(ASSIGN_CONST, true_const_addr, "true", ""));
+
+
+    std::string toaddr;
+    instructions.push_back(TripleAddrInstr(JNEQ, toaddr, cond_result_addr, true_const_addr));
+    std::size_t without_if_stmt = instructions.size();
+    std::any stmt = visit(ctx->stmt());    
+    std::size_t with_if_stmt = instructions.size();
+    updateJumpInstr(without_if_stmt - 1, std::to_string(with_if_stmt));
+
+    if(ctx->elsestmt() != nullptr) {
+        std::size_t without_else_stmt = instructions.size();
+        instructions.push_back(TripleAddrInstr(JUMP, toaddr, cond_result_addr, true_const_addr));
+
+        NoShiftParser::ElsestmtContext* else_ctx = ctx->elsestmt();
+        std::any stmt = visit(else_ctx->stmt());    
+        std::size_t with_else_stmt = instructions.size();
+
+        updateJumpInstr(without_else_stmt - 1, std::to_string(with_else_stmt));
+    }
+
+    return cond_result_addr;
+}
