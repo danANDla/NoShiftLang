@@ -1,0 +1,16 @@
+print ll 'Объявление переменных, ариф операции' rr;
+// Объявление переменных, операции 
+d a eq 30;
+d bv eq 0 - 40;
+d b eq 0 su 40;
+print ll a rr; 
+print ll b rr; 
+print ll bv rr; 
+
+l logresult eq 1 is 1;
+print ll logresult rr;
+
+print ll 'Использование приоритетов' rr;
+// Использование приоритетов
+d sum_result eq a mu ll a ad ll b mu bv rr rr;
+print ll sum_result rr;

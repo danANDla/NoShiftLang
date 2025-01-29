@@ -8,7 +8,7 @@ cmpresult eq cmpresult xor cmpresult;
 d c eq 6;
 while ll c nq 0 rr be
     print ll c rr;
-    c eq c su 1;
+    
 en
 
 if ll a is b rr print ll 'equal' rr;
