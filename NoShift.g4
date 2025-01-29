@@ -16,6 +16,7 @@ expr: 	LEFT_PARENTH expr RIGHT_PARENTH		    	#parenthesisExpr
 	| ID											#idExp
 	| NUM											#numExpr
 	| MINUS NUM									    #invNumExpr
+    | STR                                           #strExpr
 	;
 
 // описания отдельных выражений и утверждений
@@ -52,6 +53,7 @@ STRING_TYPE			: 's' ;
 // список токенов
 ID		: [a-zA-Z_] [a-zA-Z_0-9]* ;
 NUM		: [0-9]+ ;
+STR     : '\'' [a-zA-Z_0-9]* '\'' ;
 
 SPACE               : [ \r\n\t]+ -> skip;
 LINE_COMMENT        : '//' ~[\n\r]* -> skip;

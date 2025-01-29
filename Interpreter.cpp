@@ -41,19 +41,16 @@ std::any NoShiftInterp::visitVarDecl(NoShiftParser::VarDeclContext *ctx) {
 
     if(poss_l != nullptr) {
         std::cout <<" l type\n";
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::LOGIC_VAR, val);
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::LOGIC_VAR, std::any_cast<bool>(val));
         var_table[p_id] = var;
-        std::cout << std::any_cast<bool>(val) << std::endl;
     } else if (poss_str != nullptr) {
         std::cout <<"str type\n";
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR, val);
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR, std::any_cast<std::string>(val));
         var_table[p_id] = var;
-        std::cout << std::any_cast<std::string>(val) << std::endl;
     } else {
         std::cout <<"int type\n";
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::INT_VAR, val);
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::INT_VAR, std::any_cast<int>(val));
         var_table[p_id] = var;
-        std::cout << std::any_cast<int>(val) << std::endl;
     }
     return visitChildren(ctx);
 }
@@ -62,8 +59,11 @@ std::any NoShiftInterp::visitPrint(NoShiftParser::PrintContext *ctx) {
     std::any val = visit(ctx->expr());
     if(std::strcmp(val.type().name(), "i") == 0) {
         std::cout << "printing " << std::any_cast<int>(val) << std::endl;
+    } else if(std::strcmp(val.type().name(), "s") == 0) {
+        std::cout << "printing " << std::any_cast<std::string>(val) << std::endl;
     } else {
-        std::cout << "bad type to print: " << val.type().name() << std::endl;
+        // std::cout << "bad type to print: " << val.type().name() << std::endl;
+        std::cout << "printing " << std::any_cast<std::string>(val) << std::endl;
     }
     return val;
 }
@@ -81,4 +81,9 @@ std::any NoShiftInterp::visitInvNumExpr(NoShiftParser::InvNumExprContext *ctx) {
 std::any NoShiftInterp::visitIdExp(NoShiftParser::IdExpContext *ctx) {
     const std::string& p_id = ctx->ID()->toString();
     return var_table[p_id].m_val;
+}
+
+std::any NoShiftInterp::visitStrExpr(NoShiftParser::StrExprContext *ctx) {
+    std::string val = ctx->STR()->toString();
+    return val.substr(1, val.size() - 2);
 }

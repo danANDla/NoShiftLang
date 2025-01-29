@@ -30,6 +30,8 @@ public:
     virtual std::any visitNumExpr(NoShiftParser::NumExprContext *ctx) override;
     virtual std::any visitInvNumExpr(NoShiftParser::InvNumExprContext *ctx) override;
     virtual std::any visitIdExp(NoShiftParser::IdExpContext *ctx) override;
+    virtual std::any visitStrExpr(NoShiftParser::StrExprContext *ctx) override;
+
 
 private:
     bool varnameTaken(const std::string&) const;
