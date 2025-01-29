@@ -197,7 +197,8 @@ std::any NoShiftCompiler::visitVarDecl(NoShiftParser::VarDeclContext *ctx) {
         CommonNoShiftTypedVar var(CommonNoShiftTypedVar::LOGIC_VAR, std::any_cast<bool>(false));
         m_var_table[p_id] = var;
     } else if (poss_str != nullptr) {
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR, std::any_cast<std::string>(""));
+        std::any smth = "smth";
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR, std::any_cast<int>(1));
         m_var_table[p_id] = var;
     } else {
         CommonNoShiftTypedVar var(CommonNoShiftTypedVar::INT_VAR, std::any_cast<int>(1));

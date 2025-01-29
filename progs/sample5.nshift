@@ -1,0 +1,6 @@
+d a eq 10;
+d b eq 12;
+print ll 'Вложеные логические операции' rr;
+// Вложенные логические операции
+print ll ll a gr b rr and ll b gr a rr rr;
+print ll ll a gr b rr or ll b gr a rr rr;
