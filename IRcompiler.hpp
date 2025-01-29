@@ -6,6 +6,53 @@
 #include <unordered_map>
 #include <deque>
 
+enum AbstractOperation {
+    ASSIGN = 0,
+    ASSIGN_CONST,
+
+    ADD,
+    ADDstr,
+    SUB,
+    SUBstr,
+    MUL,
+    DIV,
+
+    OR,
+    XOR,
+    AND,
+
+    EQ,
+    NEQ,
+    GR,
+    LS,
+    EQstr,
+    NEQstr,
+    GRstr,
+    LSstr,
+
+    JEQ,
+
+    PRINT_STR,
+    PRINT_INT,
+    PRINT_LOGIC,
+};
+std::string operationName(const AbstractOperation op);
+
+struct TripleAddrInstr {
+
+    TripleAddrInstr() {};
+    TripleAddrInstr(const AbstractOperation, const std::string& res_addr, const std::string& a_operand, const std::string& b_operand);
+    TripleAddrInstr(TripleAddrInstr&&);
+    TripleAddrInstr(TripleAddrInstr&);
+
+
+    AbstractOperation m_op;
+    std::string m_res_addr;
+    std::string m_a_operand;
+    std::string m_b_operand;
+};
+
+
 class NoShiftCompiler : public NoShiftBaseVisitor {
 public:
     NoShiftCompiler() {};
@@ -26,7 +73,11 @@ public:
 
     virtual std::any visitParenthesisExpr(NoShiftParser::ParenthesisExprContext *ctx) override;
 
+
+    virtual std::any visitProg(NoShiftParser::ProgContext *ctx) override;
     virtual std::any visitStmt(NoShiftParser::StmtContext *ctx) override ;
+
+    // virtual std::any visitIfstmt(NoShiftParser::IfstmtContext *ctx) override;
 
 private:
     std::string stack_marker = "[Stack]";
@@ -38,4 +89,5 @@ private:
     
     std::unordered_map<std::string, CommonNoShiftTypedVar> m_var_table;
     std::deque<std::pair<std::size_t, CommonNoShiftTypedVar>> m_expr_stack; 
+    std::deque<TripleAddrInstr> instructions;
 };
