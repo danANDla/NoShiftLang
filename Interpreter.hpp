@@ -31,6 +31,8 @@ public:
     virtual std::any visitInvNumExpr(NoShiftParser::InvNumExprContext *ctx) override;
     virtual std::any visitIdExp(NoShiftParser::IdExpContext *ctx) override;
     virtual std::any visitStrExpr(NoShiftParser::StrExprContext *ctx) override;
+    virtual std::any visitLogicConstExpr(NoShiftParser::LogicConstExprContext *ctx) override;
+
 
 
 private:

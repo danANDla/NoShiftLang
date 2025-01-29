@@ -17,6 +17,7 @@ expr: 	LEFT_PARENTH expr RIGHT_PARENTH		    	#parenthesisExpr
 	| NUM											#numExpr
 	| MINUS NUM									    #invNumExpr
     | STR                                           #strExpr
+    | LOGIC_C                                       #logicConstExpr
 	;
 
 // описания отдельных выражений и утверждений
@@ -27,9 +28,9 @@ assignment: ID ASSIGN expr ';'	;
 compOperator: op=(LESS | EQUAL | NOT_EQUAL | GREATER ) ;
 
 print: 'print' LEFT_PARENTH expr RIGHT_PARENTH ';'			;
-ifstmt:		'if' '(' expr RIGHT_PARENTH stmt  elsestmt? ;
+ifstmt:		'if' LEFT_PARENTH expr RIGHT_PARENTH stmt  elsestmt? ;
 elsestmt:	'else' stmt 			;
-whilestmt:	LEFT_PARENTH '(' expr RIGHT_PARENTH stmt	;
+whilestmt:	LEFT_PARENTH LEFT_PARENTH expr RIGHT_PARENTH stmt	;
 
 
 LEFT_PARENTH		: 'll' ;
@@ -50,10 +51,11 @@ INTEGER_TYPE		: 'd' ;
 LOGIC_TYPE			: 'l' ;
 STRING_TYPE			: 's' ;
 
-// список токенов
+
+LOGIC_C : 'true' | 'false';
+STR     : '\'' ~[\n\r]* '\'' ;
 ID		: [a-zA-Z_] [a-zA-Z_0-9]* ;
 NUM		: [0-9]+ ;
-STR     : '\'' [a-zA-Z_0-9]* '\'' ;
 
 SPACE               : [ \r\n\t]+ -> skip;
 LINE_COMMENT        : '//' ~[\n\r]* -> skip;

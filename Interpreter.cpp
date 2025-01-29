@@ -59,8 +59,8 @@ std::any NoShiftInterp::visitPrint(NoShiftParser::PrintContext *ctx) {
     std::any val = visit(ctx->expr());
     if(std::strcmp(val.type().name(), "i") == 0) {
         std::cout << "printing " << std::any_cast<int>(val) << std::endl;
-    } else if(std::strcmp(val.type().name(), "s") == 0) {
-        std::cout << "printing " << std::any_cast<std::string>(val) << std::endl;
+    } else if(std::strcmp(val.type().name(), "b") == 0) {
+        std::cout << "printing " << std::any_cast<bool>(val) << std::endl;
     } else {
         // std::cout << "bad type to print: " << val.type().name() << std::endl;
         std::cout << "printing " << std::any_cast<std::string>(val) << std::endl;
@@ -86,4 +86,11 @@ std::any NoShiftInterp::visitIdExp(NoShiftParser::IdExpContext *ctx) {
 std::any NoShiftInterp::visitStrExpr(NoShiftParser::StrExprContext *ctx) {
     std::string val = ctx->STR()->toString();
     return val.substr(1, val.size() - 2);
+}
+
+std::any  NoShiftInterp::visitLogicConstExpr(NoShiftParser::LogicConstExprContext *ctx) {
+    std::string val = ctx->LOGIC_C()->toString();
+    if(val == "true")
+        return true;
+    return false;
 }

@@ -1,3 +1,8 @@
+print ll 'it is' rr;
+print ll true rr;
+print ll 'year' rr;
+print ll 2025 rr;
+
 d a eq 30;
 d bv eq su 40;
 d b eq - 40;
