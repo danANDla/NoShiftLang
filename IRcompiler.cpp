@@ -240,7 +240,7 @@ std::any NoShiftCompiler::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
     CommonNoShiftTypedVar::VarType left_type = typeByAddr(leftval_addr);
     CommonNoShiftTypedVar::VarType right_type = typeByAddr(rightval_addr);
     if(left_type != right_type) {
-        throw std::runtime_error(std::string("Логические операции над выражениями разных типов не поддерживаются"));
+        throw std::runtime_error(std::string("Операции сравнения над выражениями разных типов не поддерживаются"));
     }
 
     NoShiftParser::CompOperatorContext* op_ctx = ctx->compOperator();
@@ -295,29 +295,30 @@ std::any NoShiftCompiler::visitCompExpr(NoShiftParser::CompExprContext *ctx) {
 }
 
 std::any NoShiftCompiler::visitLogicExpr(NoShiftParser::LogicExprContext *ctx) {
-    std::any leftval = visit(ctx->left);
-    std::any rightval = visit(ctx->right);
-
-    if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
-        std::cout << leftval.type().name() << " " << rightval.type().name() << std::endl;
+    std::string leftval_addr = std::any_cast<std::string>(visit(ctx->left));
+    std::string rightval_addr = std::any_cast<std::string>(visit(ctx->right));
+    CommonNoShiftTypedVar::VarType left_type = typeByAddr(leftval_addr);
+    CommonNoShiftTypedVar::VarType right_type = typeByAddr(rightval_addr);
+    if(left_type != right_type) {
         throw std::runtime_error(std::string("Логические операции над выражениями разных типов не поддерживаются"));
     }
 
     antlr4::tree::TerminalNode* poss_and = ctx->LOGAND();
     antlr4::tree::TerminalNode* poss_xor = ctx->LOGXOR();
 
-    if(std::strcmp(leftval.type().name(), "i") == 0) {
+    std::string resaddr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::LOGIC_VAR, false));
+    if(left_type == CommonNoShiftTypedVar::INT_VAR) {
         throw std::runtime_error(std::string("Логические операции с типом INTEGER не поддерживаются"));
-    } else if(std::strcmp(leftval.type().name(), "b") == 0) {
+    } else if(right_type == CommonNoShiftTypedVar::LOGIC_VAR) {
         if(poss_and != nullptr) {
-            return (bool) (std::any_cast<bool>(leftval) & std::any_cast<bool>(rightval));
+            std::cout << resaddr << " " << leftval_addr << " AND " << rightval_addr << std::endl; 
         } else if(poss_xor != nullptr) {
-            return (bool) (std::any_cast<bool>(leftval) ^ std::any_cast<bool>(rightval));
+            std::cout << resaddr << " " << leftval_addr << " XOR " << rightval_addr << std::endl; 
         } else {
-            return (bool) (std::any_cast<bool>(leftval) || std::any_cast<bool>(rightval));
+            std::cout << resaddr << " " << leftval_addr << " OR " << rightval_addr << std::endl; 
         }
     } else {
         throw std::runtime_error(std::string("Логические операции с типом STRING не поддерживаются"));
     }
+    return resaddr;
 }
-

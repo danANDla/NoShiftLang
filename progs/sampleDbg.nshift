@@ -1,10 +1,6 @@
 d a eq 33333;
 d b eq 40;
+d sumresult eq a ad b;
+
 l cmpresult eq a is b;
-if ll su cmpresult rr print ll 'vars not eq' rr;
-if ll a is b rr print ll 'equal' rr;
-if ll a is a rr print ll 'equal' rr;
-if ll b is 52 rr print ll 'equal' rr;
-else print ll 'not equal' rr;
-if ll b gr a rr print ll 'b is greater than a' rr;
-else print ll 'a is greater than b' rr;
+cmpresult eq cmpresult xor cmpresult;
