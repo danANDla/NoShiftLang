@@ -16,7 +16,6 @@ struct CommonNoShiftTypedVar {
     CommonNoShiftTypedVar(CommonNoShiftTypedVar&&);
     CommonNoShiftTypedVar& operator=(const CommonNoShiftTypedVar& another);
 
-
     VarType m_type;
     std::any m_val;
 };
@@ -26,6 +25,11 @@ public:
     NoShiftInterp() {};
     virtual std::any visitAssignment(NoShiftParser::AssignmentContext *ctx) override;
     virtual std::any visitVarDecl(NoShiftParser::VarDeclContext *ctx) override;
+    virtual std::any visitPrint(NoShiftParser::PrintContext *ctx) override;
+
+    virtual std::any visitNumExpr(NoShiftParser::NumExprContext *ctx) override;
+    virtual std::any visitInvNumExpr(NoShiftParser::InvNumExprContext *ctx) override;
+    virtual std::any visitIdExp(NoShiftParser::IdExpContext *ctx) override;
 
 private:
     bool varnameTaken(const std::string&) const;

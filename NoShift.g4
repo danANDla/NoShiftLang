@@ -15,7 +15,7 @@ expr: 	LEFT_PARENTH expr RIGHT_PARENTH		    	#parenthesisExpr
 	| left=expr compOperator right=expr				#compExpr
 	| ID											#idExp
 	| NUM											#numExpr
-	| MINUS expr										#invNumExpr
+	| MINUS NUM									    #invNumExpr
 	;
 
 // описания отдельных выражений и утверждений
@@ -25,13 +25,10 @@ assignment: ID ASSIGN expr ';'	;
 
 compOperator: op=(LESS | EQUAL | NOT_EQUAL | GREATER ) ;
 
-print: 'print' '(' expr ')' ';'			;
-
-ifstmt:		'if' '(' expr ')' stmt  elsestmt? ;
-
+print: 'print' LEFT_PARENTH expr RIGHT_PARENTH ';'			;
+ifstmt:		'if' '(' expr RIGHT_PARENTH stmt  elsestmt? ;
 elsestmt:	'else' stmt 			;
-
-whilestmt:	'while' '(' expr ')' stmt	;
+whilestmt:	LEFT_PARENTH '(' expr RIGHT_PARENTH stmt	;
 
 
 LEFT_PARENTH		: 'll' ;

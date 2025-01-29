@@ -1,4 +1,4 @@
 d a eq 30;
 d bv eq su 40;
 d b eq - 40;
-
+print ll b rr; 

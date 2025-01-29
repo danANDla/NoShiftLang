@@ -1,6 +1,7 @@
 #include "Interpreter.hpp"
 
 #include <iostream>
+#include <cstring>
 
 CommonNoShiftTypedVar::CommonNoShiftTypedVar(VarType type, std::any val)
     : m_type(type), m_val(val){
@@ -35,17 +36,49 @@ std::any NoShiftInterp::visitVarDecl(NoShiftParser::VarDeclContext *ctx) {
     antlr4::tree::TerminalNode* poss_str = ctx->STRING_TYPE();
     antlr4::tree::TerminalNode* poss_d = ctx->INTEGER_TYPE();
     antlr4::tree::TerminalNode* poss_l = ctx->LOGIC_TYPE();
+    NoShiftParser::ExprContext* expr = ctx->expr();
+    std::any val = visit(expr);
 
     if(poss_l != nullptr) {
         std::cout <<" l type\n";
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::LOGIC_VAR, false);
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::LOGIC_VAR, val);
+        var_table[p_id] = var;
+        std::cout << std::any_cast<bool>(val) << std::endl;
     } else if (poss_str != nullptr) {
         std::cout <<"str type\n";
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR,"empty");
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::STRING_VAR, val);
+        var_table[p_id] = var;
+        std::cout << std::any_cast<std::string>(val) << std::endl;
     } else {
         std::cout <<"int type\n";
-        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::INT_VAR, 0);
+        CommonNoShiftTypedVar var(CommonNoShiftTypedVar::INT_VAR, val);
         var_table[p_id] = var;
+        std::cout << std::any_cast<int>(val) << std::endl;
     }
     return visitChildren(ctx);
+}
+
+std::any NoShiftInterp::visitPrint(NoShiftParser::PrintContext *ctx) {
+    std::any val = visit(ctx->expr());
+    if(std::strcmp(val.type().name(), "i") == 0) {
+        std::cout << "printing " << std::any_cast<int>(val) << std::endl;
+    } else {
+        std::cout << "bad type to print: " << val.type().name() << std::endl;
+    }
+    return val;
+}
+
+std::any NoShiftInterp::visitNumExpr(NoShiftParser::NumExprContext *ctx) {
+    int val = std::stoi(ctx->NUM()->toString());
+    return val;
+}
+
+std::any NoShiftInterp::visitInvNumExpr(NoShiftParser::InvNumExprContext *ctx) {
+    int val = std::stoi(ctx->NUM()->toString());
+    return -val;
+}
+
+std::any NoShiftInterp::visitIdExp(NoShiftParser::IdExpContext *ctx) {
+    const std::string& p_id = ctx->ID()->toString();
+    return var_table[p_id].m_val;
 }
