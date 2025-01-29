@@ -3,5 +3,5 @@ d b eq 40;
 d bv eq 46;
 b eq a;
 print ll b rr;
-d sum_result eq a ad ll b ad bv rr;
+d sum_result eq a ad ll b mu bv rr;
 print ll sum_result rr;

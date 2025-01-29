@@ -158,7 +158,6 @@ std::any NoShiftCompiler::visitLogicConstExpr(NoShiftParser::LogicConstExprConte
 }
 
 std::any NoShiftCompiler::visitPlusMinusExpr(NoShiftParser::PlusMinusExprContext *ctx) {
-
     std::string leftval_addr = std::any_cast<std::string>(visit(ctx->left));
     std::string rightval_addr = std::any_cast<std::string>(visit(ctx->right));
     CommonNoShiftTypedVar::VarType left_type = typeByAddr(leftval_addr);
@@ -195,28 +194,33 @@ std::any NoShiftCompiler::visitPlusMinusExpr(NoShiftParser::PlusMinusExprContext
 }
 
 std::any NoShiftCompiler::visitMulDivExpr(NoShiftParser::MulDivExprContext *ctx) {
-    std::any leftval = visit(ctx->left);
-    std::any rightval = visit(ctx->right);
+    std::string leftval_addr = std::any_cast<std::string>(visit(ctx->left));
+    std::string rightval_addr = std::any_cast<std::string>(visit(ctx->right));
+    CommonNoShiftTypedVar::VarType left_type = typeByAddr(leftval_addr);
+    CommonNoShiftTypedVar::VarType right_type = typeByAddr(rightval_addr);
 
-    if(std::strcmp(leftval.type().name(), rightval.type().name()) != 0) {
-        throw std::runtime_error(std::string("Арифметические операции над выражениями разных ти пов не поддерживаются"));
+    if(left_type != right_type) {
+        throw std::runtime_error(std::string("Арифметические операции над выражениями разных типов не поддерживаются"));
     }
 
-    antlr4::tree::TerminalNode* poss_asterisk = ctx->ASTERISK();
-    bool is_asterisk = true;
-    if(poss_asterisk == nullptr) is_asterisk = false;
+    antlr4::tree::TerminalNode* poss_plus = ctx->ASTERISK();
+    bool is_plus = true;
+    if(poss_plus == nullptr) is_plus = false;
 
-    if(std::strcmp(leftval.type().name(), "i") == 0) {
-        if(is_asterisk) {
-            return std::any_cast<int>(leftval) * std::any_cast<int>(rightval);
+    std::string resaddr;
+    if(left_type == CommonNoShiftTypedVar::INT_VAR) {
+        resaddr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::INT_VAR, 0));
+        if(is_plus) {
+            std::cout << resaddr << " " << leftval_addr << " * " << rightval_addr << std::endl;
         } else {
-            return std::any_cast<int>(leftval) / std::any_cast<int>(rightval);
+            std::cout << resaddr << " " << leftval_addr << " / " << rightval_addr << std::endl;
         }
-    } else if(std::strcmp(leftval.type().name(), "b") == 0) {
+    } else if(left_type == CommonNoShiftTypedVar::LOGIC_VAR) {
         throw std::runtime_error(std::string("Арифметические операции с типом LOGIC не поддерживаются"));
     } else {
         throw std::runtime_error(std::string("Умножение и деление строк не поддерживается"));
     }
+    return resaddr;
 }
 
 std::any NoShiftCompiler::visitParenthesisExpr(NoShiftParser::ParenthesisExprContext *ctx) {
