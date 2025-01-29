@@ -1,0 +1,5 @@
+d c eq 6;
+while ll c nq 0 rr be
+    print ll c rr;
+    c eq c su 1;
+en

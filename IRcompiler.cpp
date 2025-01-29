@@ -467,13 +467,14 @@ std::any NoShiftCompiler::visitIfstmt(NoShiftParser::IfstmtContext *ctx) {
     std::string toaddr;
     instructions.push_back(TripleAddrInstr(JNEQ, toaddr, cond_result_addr, true_const_addr));
     std::size_t without_if_stmt = instructions.size();
+
     std::any stmt = visit(ctx->stmt());    
     std::size_t with_if_stmt = instructions.size();
     updateJumpInstr(without_if_stmt - 1, std::to_string(with_if_stmt));
 
     if(ctx->elsestmt() != nullptr) {
-        std::size_t without_else_stmt = instructions.size();
         instructions.push_back(TripleAddrInstr(JUMP, toaddr, cond_result_addr, true_const_addr));
+        std::size_t without_else_stmt = instructions.size();
 
         NoShiftParser::ElsestmtContext* else_ctx = ctx->elsestmt();
         std::any stmt = visit(else_ctx->stmt());    
@@ -481,6 +482,34 @@ std::any NoShiftCompiler::visitIfstmt(NoShiftParser::IfstmtContext *ctx) {
 
         updateJumpInstr(without_else_stmt - 1, std::to_string(with_else_stmt));
     }
+
+    return cond_result_addr;
+}
+
+std::any NoShiftCompiler::visitWhilestmt(NoShiftParser::WhilestmtContext *ctx) {
+    std::string true_const_addr = putTmp(CommonNoShiftTypedVar(CommonNoShiftTypedVar::LOGIC_VAR, true));
+    instructions.push_back(TripleAddrInstr(ASSIGN_CONST, true_const_addr, "true", ""));
+    std::size_t without_while_expr = instructions.size();
+
+    std::string cond_result_addr = std::any_cast<std::string>(visit(ctx->expr()));
+    CommonNoShiftTypedVar::VarType result_type = typeByAddr(cond_result_addr);
+    if(result_type != CommonNoShiftTypedVar::LOGIC_VAR) {
+        throw std::runtime_error(std::string("В условие должно быть выражение типа LOGIC"));
+    }
+    std::size_t with_while_expr = instructions.size();
+
+    std::string toaddr;
+    instructions.push_back(TripleAddrInstr(JNEQ, toaddr, cond_result_addr, true_const_addr));
+    std::size_t without_while_stmt = instructions.size();
+
+    std::any stmt = visit(ctx->stmt());    
+    std::size_t with_while_stmt = instructions.size();
+
+    updateJumpInstr(without_while_stmt - 1, std::to_string(with_while_stmt));
+    instructions.push_back(TripleAddrInstr(JUMP, std::to_string(without_while_expr), "", ""));
+
+    std::size_t with_last_jump = instructions.size();
+    updateJumpInstr(without_while_stmt - 1, std::to_string(with_last_jump));
 
     return cond_result_addr;
 }

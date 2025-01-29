@@ -81,6 +81,7 @@ public:
     virtual std::any visitStmt(NoShiftParser::StmtContext *ctx) override ;
 
     virtual std::any visitIfstmt(NoShiftParser::IfstmtContext *ctx) override;
+    virtual std::any visitWhilestmt(NoShiftParser::WhilestmtContext *ctx) override;
 
 private:
     std::string stack_marker = "[Stack]";
